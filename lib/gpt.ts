@@ -63,7 +63,7 @@ export async function strict_output(
         { role: "user", content: user_prompt.toString() },
       ],
     });
- 
+    console.log("Response:", response.data.choices[0].message?.content);  
     let res: string =
       response.data.choices[0].message?.content?.replace(/'/g, '"') ?? "";
  

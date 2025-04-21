@@ -4,6 +4,16 @@ import { createChaptersSchema } from "@/validators/course";
 import { ZodError } from "zod";
 import { strict_output } from "@/lib/gpt";
 
+interface ApiError extends Error {
+    response?: {
+        data?: any;
+        status?: number;
+        headers?: {
+            'retry-after'?: string;
+        };
+    };
+}
+
 export async function POST(req: Request, res: Response) {
     try {
         const body = await req.json();
@@ -29,22 +39,36 @@ export async function POST(req: Request, res: Response) {
                 }
 
         );
-        console.log("||||||||working till here||||||");
-
-        console.log(output_units);
-
-
         console.log(output_units);
 
         return NextResponse.json(output_units);
-    } catch (error) {
+    } catch (error: unknown) {
+        console.error("Full error details:", error);
+        
         if (error instanceof ZodError) {
-            return new NextResponse("invalid body", {status: 400});
+            return NextResponse.json({
+                error: "Invalid request format",
+                details: error.errors
+            }, { status: 400 });
         }
 
+        const apiError = error as ApiError;
+        
+        if (apiError.response?.data) {
+            console.error("API Error Response:", apiError.response.data);
+            
+            if (apiError.response.status === 429) {
+                return NextResponse.json({
+                    error: "Rate limit exceeded",
+                    message: "Please try again later",
+                    retryAfter: apiError.response.headers?.['retry-after'] || '60'
+                }, { status: 429 });
+            }
+        }
+
+        return NextResponse.json({
+            error: "Internal server error",
+            message: apiError.message || "Unknown error occurred"
+        }, { status: 500 });
     }
 }
-    
-
-
-
