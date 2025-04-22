@@ -10,12 +10,23 @@ import { Separator } from './ui/separator';
 import { Button } from './ui/button';
 import { Plus, Trash } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMutation } from '@tanstack/react-query';
+import axios from 'axios';
+import { error } from 'console';
 
 type Props = {}
 
 type Input = z.infer<typeof createChaptersSchema>
 
 const CreateCourseForm = (props: Props) => {
+
+    const {mutate : createChapters, isPending} = useMutation({
+        mutationFn: async({title,units}:Input)=>{
+            const response = await axios.post('/api/course/createChapters')
+            return response.data;
+        }
+    })
+
     const form = useForm<Input>({
         resolver: zodResolver(createChaptersSchema),
         defaultValues: {
@@ -25,7 +36,15 @@ const CreateCourseForm = (props: Props) => {
     });
 
     function onSubmit(data: Input) {
-        console.log(data);
+        if (data.units.some(unit=>unit===''))
+        createChapters(data, {
+            onSuccess: ()=>{
+
+            },
+            onError:(error)=>{
+                console.log(error);
+            }
+        })
     }
 
     form.watch();
@@ -119,11 +138,7 @@ const CreateCourseForm = (props: Props) => {
                         </div>
                         <Separator className='flex-[1]' />
                     </div>
-                    <Button
-                    type='submit'
-                    className='w-full mt-6'
-                    size='lg'
-                    >
+                    <Button disabled={isPending} type='submit' className='w-full mt-6' size='lg'>
                         Let's Go!!
                     </Button>
                 </form>
