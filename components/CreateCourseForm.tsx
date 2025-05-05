@@ -13,19 +13,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { error } from 'console';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
+
+
 
 type Props = {}
 
 type Input = z.infer<typeof createChaptersSchema>
 
 const CreateCourseForm = (props: Props) => {
-
+    const router = useRouter();
     const {mutate : createChapters, isPending} = useMutation({
         mutationFn: async({title,units}:Input)=>{
-            const response = await axios.post('/api/course/createChapters')
+            const response = await axios.post('/api/course/createChapters', {
+                title , 
+                units,
+            });
             return response.data;
-        }
-    })
+        },
+    });
 
     const form = useForm<Input>({
         resolver: zodResolver(createChaptersSchema),
@@ -36,13 +43,26 @@ const CreateCourseForm = (props: Props) => {
     });
 
     function onSubmit(data: Input) {
-        if (data.units.some(unit=>unit===''))
+        if (data.units.some(unit=>unit==='')){
+            toast("Error",{
+                description: "Please fill all the units",
+                action: "destructive",
+            });
+            return;
+        }
         createChapters(data, {
-            onSuccess: ()=>{
-
+            onSuccess: (course_id)=>{
+                toast("Success",{
+                    description: "Course created successfully",
+                })
+                router.push(`/create/${course_id}`);
             },
             onError:(error)=>{
                 console.log(error);
+                toast("Error",{
+                    description: "Please fill all the units",
+                    action: "destructive",
+                });
             }
         })
     }
