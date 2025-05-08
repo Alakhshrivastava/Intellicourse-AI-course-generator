@@ -12,7 +12,6 @@ import { Plus, Trash } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
-import { error } from 'console';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
@@ -51,10 +50,10 @@ const CreateCourseForm = (props: Props) => {
             return;
         }
         createChapters(data, {
-            onSuccess: (course_id)=>{
+            onSuccess: ({course_id})=>{
                 toast("Success",{
                     description: "Course created successfully",
-                })
+                });
                 router.push(`/create/${course_id}`);
             },
             onError:(error)=>{
